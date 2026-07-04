@@ -1,0 +1,89 @@
+[project]
+name = "mdhousingpolicypipeline"
+version = "0.1.0"
+description = "Retrieval-grounded advisory over Maryland housing/HOA law — guidance and citations, not verdicts."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+
+# The root is a virtual workspace; the real code lives in packages/*.
+dependencies = [
+    "mdhpp-core",
+    "mdhpp-ingestion",
+    "mdhpp-retrieval",
+    "mdhpp-api",
+]
+
+[dependency-groups]
+# Dev tooling shared across the whole workspace, installed with `uv sync`.
+dev = [
+    "ruff>=0.6.0",
+    "mypy>=1.11.0",
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=5.0.0",
+    "types-psycopg2>=2.9.0",
+]
+
+[tool.uv.workspace]
+members = ["packages/*"]
+
+[tool.uv.sources]
+mdhpp-core = { workspace = true }
+mdhpp-ingestion = { workspace = true }
+mdhpp-retrieval = { workspace = true }
+mdhpp-api = { workspace = true }
+
+# ----------------------------------------------------------------------------
+# Ruff — lint + format, applied across the workspace.
+# ----------------------------------------------------------------------------
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["packages/core/src", "packages/ingestion/src", "packages/retrieval/src", "packages/api/src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "PL", "RUF"]
+ignore = ["PLR2004", "PLR0913"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["PLR2004", "S101"]
+
+# ----------------------------------------------------------------------------
+# mypy — strict, workspace-wide.
+# ----------------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+strict = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+disallow_any_generics = true
+mypy_path = [
+    "packages/core/src",
+    "packages/ingestion/src",
+    "packages/retrieval/src",
+    "packages/api/src",
+]
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+# Third-party libs without stubs — don't fail strict mode on them.
+module = ["pgvector.*", "FlagEmbedding.*", "sentence_transformers.*", "trafilatura.*"]
+ignore_missing_imports = true
+
+# ----------------------------------------------------------------------------
+# pytest — marker-gated unit vs integration suites.
+# `pytest -m unit` runs fast, no external services.
+# `pytest -m integration` needs the dockerized pgvector up.
+# ----------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "unit: fast, no external dependencies (default in CI lint stage)",
+    "integration: requires the dockerized pgvector data plane",
+]
+addopts = "--strict-markers -ra"

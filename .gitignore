@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# uv
+uv.lock.bak
+
+# env / secrets
+.env
+!.env.example
+
+# models / caches (mounted as docker volumes, never committed)
+.cache/
+models/
+*.bin
+*.safetensors
+
+# node / frontend (Phase 4)
+node_modules/
+frontend/dist/
+frontend/.next/
+
+# data
+corpus/*.pdf
+corpus/*.html
+!corpus/.gitkeep
+
+# OS
+.DS_Store
