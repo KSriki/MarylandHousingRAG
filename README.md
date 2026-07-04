@@ -49,7 +49,7 @@ uv run pytest -m unit         # fast tests, no services
 Each phase is a working, committable slice.
 
 - [x] **Phase 0** — repo skeleton, uv workspace, tooling, core types + settings + model port.
-- [ ] **Phase 1** — pgvector data plane: docker-compose, init-sidecar schema, multistage Dockerfile, volumes.
+- [x] **Phase 1** — pgvector data plane: docker-compose, init-sidecar schema, multistage Dockerfile, volumes.
 - [ ] **Phase 2** — ingestion pipeline: parse, breadcrumb-header chunking, BGE-M3 embed, delta upsert.
 - [ ] **Phase 3** — retrieval + SSE API: hybrid + rerank, grounding prompt, `/ask` endpoint, rate limiting.
 - [ ] **Phase 4** — shadcn frontend consuming SSE, source cards, disclaimer banner.

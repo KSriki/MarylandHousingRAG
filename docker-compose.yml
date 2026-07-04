@@ -1,0 +1,50 @@
+# Data plane for local dev and single-host deploy.
+# nginx + frontend land in later phases; this phase brings up pgvector + backend.
+
+services:
+  # --- pgvector: the single data plane (vector + BM25 + metadata) -----------
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ${MDHPP_PG_DB:-mdhpp}
+      POSTGRES_USER: ${MDHPP_PG_USER:-mdhpp}
+      POSTGRES_PASSWORD: ${MDHPP_PG_PASSWORD:-mdhpp}
+    # Schema is auto-applied from docker/postgres/*.sql on first boot only
+    # (postgres runs /docker-entrypoint-initdb.d/* against an empty data dir).
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MDHPP_PG_USER:-mdhpp} -d ${MDHPP_PG_DB:-mdhpp}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  # --- backend: FastAPI SSE app (wired up in Phase 3) ----------------------
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    environment:
+      MDHPP_PG_HOST: db
+      MDHPP_PG_PORT: 5432
+      MDHPP_PG_DB: ${MDHPP_PG_DB:-mdhpp}
+      MDHPP_PG_USER: ${MDHPP_PG_USER:-mdhpp}
+      MDHPP_PG_PASSWORD: ${MDHPP_PG_PASSWORD:-mdhpp}
+    # Model + HF caches live in named volumes so weights are downloaded once
+    # and never copied into the image (keeps builds fast, layers small).
+    volumes:
+      - hf_cache:/home/app/.cache/huggingface
+      - model_cache:/home/app/.cache/mdhpp
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:
+  hf_cache:
+  model_cache:
