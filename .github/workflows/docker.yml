@@ -1,0 +1,53 @@
+name: Docker
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docker/**"
+      - "packages/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/docker.yml"
+  pull_request:
+    paths:
+      - "docker/**"
+      - "packages/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/docker.yml"
+
+concurrency:
+  group: docker-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # buildx enables the gha cache backend and advanced build features.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Build the backend image with GitHub Actions layer caching. Layers are
+      # cached across runs (cache-from/to type=gha), so an unchanged dependency
+      # layer isn't rebuilt — only the source layer on top of it. `load: true`
+      # keeps the image local (no registry push); flip to push when a registry
+      # is wired up.
+      - name: Build backend image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          tags: mdhpp-backend:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Smoke test: the image imports the app packages and the CLI entry points
+      # resolve. Cheap proof the build is actually runnable, not just buildable.
+      - name: Smoke test image
+        run: |
+          docker run --rm mdhpp-backend:ci python -c "import mdhpp_core, mdhpp_api; print('image OK')"
