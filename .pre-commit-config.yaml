@@ -3,9 +3,14 @@ repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.9
     hooks:
+      # Lint with autofix. --exit-non-zero-on-fix makes the commit fail the
+      # first time so you review and re-stage the fixes (keeps local == CI).
       - id: ruff
-        args: [--fix]
+        name: ruff (lint)
+        args: [--fix, --exit-non-zero-on-fix]
+      # Format check/apply across the workspace.
       - id: ruff-format
+        name: ruff (format)
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.11.2
     hooks:
