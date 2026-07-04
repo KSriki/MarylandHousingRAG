@@ -28,10 +28,13 @@ node_modules/
 frontend/dist/
 frontend/.next/
 
-# data
+# data — ignore source docs anywhere under corpus/, keep structure + manifest
+corpus/**/*.pdf
+corpus/**/*.html
 corpus/*.pdf
 corpus/*.html
-!corpus/.gitkeep
+!corpus/**/.gitkeep
+!corpus/sources.md
 
 # OS
 .DS_Store

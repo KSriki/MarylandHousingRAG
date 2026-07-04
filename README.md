@@ -42,7 +42,15 @@ uv sync                       # resolve + install the workspace
 cp .env.example .env          # adjust if needed
 uv run pre-commit install     # ruff + mypy on commit
 uv run pytest -m unit         # fast tests, no services
+
+docker compose up -d db       # bring up pgvector (schema auto-applied)
+uv run pytest -m integration  # schema/integration tests against the DB
+docker compose up             # full stack; app served on http://localhost (nginx :80)
 ```
+
+Drop source documents into `corpus/` (see `corpus/sources.md`) before running
+ingestion. CI (`.github/workflows/ci.yml`) runs ruff, strict mypy, and unit
+tests on every push/PR, then integration tests against a pgvector service.
 
 ## Build phases
 
