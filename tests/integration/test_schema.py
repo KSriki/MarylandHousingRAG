@@ -24,9 +24,7 @@ def conn() -> psycopg.Connection:
 
 
 def test_vector_extension_installed(conn: psycopg.Connection) -> None:
-    row = conn.execute(
-        "SELECT 1 FROM pg_extension WHERE extname = 'vector'"
-    ).fetchone()
+    row = conn.execute("SELECT 1 FROM pg_extension WHERE extname = 'vector'").fetchone()
     assert row is not None
 
 
@@ -38,9 +36,7 @@ def test_chunks_table_exists(conn: psycopg.Connection) -> None:
 
 
 def test_expected_indexes_present(conn: psycopg.Connection) -> None:
-    rows = conn.execute(
-        "SELECT indexname FROM pg_indexes WHERE tablename = 'chunks'"
-    ).fetchall()
+    rows = conn.execute("SELECT indexname FROM pg_indexes WHERE tablename = 'chunks'").fetchall()
     names = {r[0] for r in rows}
     assert "chunks_embedding_hnsw" in names
     assert "chunks_ts_gin" in names

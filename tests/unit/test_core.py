@@ -33,9 +33,7 @@ def test_chunk_id_changes_with_content() -> None:
 
 
 def test_retrieval_result_top_truncates() -> None:
-    chunks = [
-        Chunk(id=str(i), text=f"c{i}", citation=_citation()) for i in range(10)
-    ]
+    chunks = [Chunk(id=str(i), text=f"c{i}", citation=_citation()) for i in range(10)]
     result = RetrievalResult(chunks=chunks, scores=[float(i) for i in range(10)])
     top3 = result.top(3)
     assert len(top3.chunks) == 3
