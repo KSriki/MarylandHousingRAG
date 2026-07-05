@@ -13,8 +13,8 @@ from fastapi import FastAPI
 def create_app() -> FastAPI:
     app = FastAPI(title="MDHousingPolicyPipeline API", version="0.1.0")
 
-    @app.get("/api/healthz")
-    def healthz() -> dict[str, str]:
+    @app.get("/api/healthcheck")
+    def healthcheck() -> dict[str, str]:
         """Liveness probe. Used by the container healthcheck and the proxy."""
         return {"status": "ok"}
 

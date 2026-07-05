@@ -50,7 +50,7 @@ services:
     # Reports healthy only once the app actually answers, so the proxy waits
     # for a working backend rather than a merely-started container.
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/healthz')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/healthcheck')"]
       interval: 10s
       timeout: 3s
       retries: 5

@@ -21,7 +21,7 @@ format: ## Ruff format the workspace
 	uv run ruff format .
 
 typecheck: ## Strict mypy across all packages
-	uv run mypy packages/*/src
+	uv run mypy src packages/*/src
 
 # ---- tests ----------------------------------------------------------------
 test: ## Run all tests (integration skips if pgvector is down)
@@ -61,7 +61,7 @@ test-plane-down: ## Tear down the ephemeral test plane (if left running)
 check: ## Full local gate: ruff + format-check + mypy + unit tests
 	uv run ruff check .
 	uv run ruff format --check .
-	uv run mypy packages/*/src
+	uv run mypy src packages/*/src
 	uv run pytest -m unit
 
 # ---- docker / data plane --------------------------------------------------
@@ -82,10 +82,10 @@ build: ## Rebuild the policy-api image
 
 # ---- app ------------------------------------------------------------------
 ingest: ## Run the ingestion pipeline over corpus/ (Phase 2+)
-	uv run ingest
+	uv run mdhpp ingest
 
 serve: ## Run the FastAPI app locally (Phase 3+)
-	uv run serve
+	uv run mdhpp serve
 
 # ---- housekeeping ---------------------------------------------------------
 clean: ## Remove caches and build artifacts (keeps the venv)

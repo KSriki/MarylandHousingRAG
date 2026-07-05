@@ -6,13 +6,24 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 
-# The root is a virtual workspace; the real code lives in packages/*.
+# The root is the unified CLI package; member logic lives in packages/*.
 dependencies = [
     "mdhpp-core",
     "mdhpp-ingestion",
     "mdhpp-retrieval",
     "mdhpp-api",
+    "typer>=0.12",
 ]
+
+[project.scripts]
+mdhpp = "mdhpp.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mdhpp"]
 
 [dependency-groups]
 # Dev tooling shared across the whole workspace, installed with `uv sync`.
@@ -41,7 +52,7 @@ mdhpp-api = { workspace = true }
 [tool.ruff]
 target-version = "py312"
 line-length = 100
-src = ["packages/core/src", "packages/ingestion/src", "packages/retrieval/src", "packages/api/src"]
+src = ["src", "packages/core/src", "packages/ingestion/src", "packages/retrieval/src", "packages/api/src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "SIM", "PL", "RUF"]
@@ -49,6 +60,9 @@ ignore = ["PLR2004", "PLR0913"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["PLR2004", "S101"]
+# Typer CLI dispatch: PLC0415 (subcommand impls are imported lazily inside
+# handlers, by design) and B008 (typer.Option(...) in defaults is Typer's API).
+"src/mdhpp/**" = ["PLC0415", "B008"]
 
 # ----------------------------------------------------------------------------
 # mypy — strict, workspace-wide.
@@ -63,6 +77,7 @@ warn_unused_ignores = true
 disallow_untyped_defs = true
 disallow_any_generics = true
 mypy_path = [
+    "src",
     "packages/core/src",
     "packages/ingestion/src",
     "packages/retrieval/src",
@@ -81,10 +96,13 @@ ignore_missing_imports = true
 # `pytest -m integration` needs the dockerized pgvector up.
 # ----------------------------------------------------------------------------
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+# Discover tests both in the root tests/ tree and co-located under each
+# package (packages/*/tests). importlib mode handles the distributed layout
+# without needing __init__.py in every test dir or name collisions.
+testpaths = ["tests", "packages"]
 asyncio_mode = "auto"
 markers = [
     "unit: fast, no external dependencies (default in CI lint stage)",
     "integration: requires the dockerized pgvector data plane",
 ]
-addopts = "--strict-markers -ra"
+addopts = "--strict-markers -ra --import-mode=importlib"

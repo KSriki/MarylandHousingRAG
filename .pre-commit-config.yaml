@@ -18,7 +18,7 @@ repos:
       # sync. Identical to what `make check` and CI run.
       - id: mypy
         name: mypy (strict, via uv)
-        entry: uv run mypy packages/core/src packages/ingestion/src packages/retrieval/src packages/api/src
+        entry: uv run --no-sync mypy packages/core/src packages/ingestion/src packages/retrieval/src packages/api/src
         language: system
         types: [python]
         pass_filenames: false

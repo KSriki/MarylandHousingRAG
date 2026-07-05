@@ -5,11 +5,12 @@ description = "Offline pipeline: parse -> section-aware chunk -> embed -> upsert
 requires-python = ">=3.12"
 dependencies = [
     "mdhpp-core",
-    "psycopg[binary]>=3.2.0",
-    "pgvector>=0.3.0",
-    "pypdf>=5.0.0",
-    "trafilatura>=1.12.0",
-    "tiktoken>=0.8.0",
+    "psycopg[binary]>=3.2",
+    "pgvector>=0.3",
+    "pypdf>=5.0",
+    "trafilatura>=1.12",
+    "tiktoken>=0.8",
+    "flagembedding>=1.2",
 ]
 
 [project.scripts]

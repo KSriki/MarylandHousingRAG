@@ -20,10 +20,12 @@ COPY packages/ingestion/pyproject.toml packages/ingestion/pyproject.toml
 COPY packages/retrieval/pyproject.toml packages/retrieval/pyproject.toml
 COPY packages/api/pyproject.toml packages/api/pyproject.toml
 
-# Then the source, then a full sync so the workspace packages install too.
+# Then the source, then a scoped sync so only the API closure installs.
 COPY packages/ packages/
+# Install only the API package's dependency closure (not the whole workspace),
+# so the image doesn't pull ingestion-only heavy deps like torch/FlagEmbedding.
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+    uv sync --frozen --no-dev --package mdhpp-api
 
 # ---- Stage 2: runtime -------------------------------------------------------
 # Slim final image: just the venv and source, no uv, no build tooling.
@@ -45,4 +47,6 @@ USER app
 EXPOSE 8000
 
 # Overridable; docker-compose sets the concrete command per service.
-CMD ["serve"]
+# Run the API directly via uvicorn (not the root `mdhpp` umbrella command,
+# which would pull ingestion's heavy deps this image intentionally omits).
+CMD ["uvicorn", "mdhpp_api.app:app", "--host", "0.0.0.0", "--port", "8000"]
