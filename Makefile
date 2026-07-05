@@ -3,7 +3,7 @@
 
 .DEFAULT_GOAL := help
 .PHONY: help install sync hooks lint format typecheck \
-        test test-unit test-integration test-integration-keep check \
+        test test-unit test-integration test-integration-keep test-plane-down check \
         db-up db-down up down build ingest serve clean
 
 # ---- setup ----------------------------------------------------------------
@@ -30,23 +30,32 @@ test: ## Run all tests (integration skips if pgvector is down)
 test-unit: ## Fast unit tests only (no services)
 	uv run pytest -m unit
 
-test-integration: ## Integration tests: bring up pgvector, wait, run, tear down
-	@echo "Starting pgvector..."
-	docker compose up -d db
-	@echo "Waiting for pgvector to be healthy..."
-	@until docker compose exec -T db pg_isready -U mdhpp -d mdhpp >/dev/null 2>&1; do \
+test-integration: ## Integration tests against an ephemeral isolated test DB
+	@echo "Bringing up ephemeral test plane (docker-compose.test.yml)..."
+	docker compose -p mdhpp-test -f docker-compose.test.yml up -d
+	@echo "Waiting for test pgvector to be healthy..."
+	@until docker compose -p mdhpp-test -f docker-compose.test.yml \
+		exec -T policy-db-test pg_isready -U mdhpp -d mdhpp_test >/dev/null 2>&1; do \
 		sleep 1; \
 	done
-	@echo "pgvector ready. Running integration tests..."
-	@trap 'docker compose stop db' EXIT; uv run pytest -m integration
+	@echo "Test DB ready. Running integration tests..."
+	@trap 'docker compose -p mdhpp-test -f docker-compose.test.yml down -v' EXIT; \
+		MDHPP_PG_HOST=localhost MDHPP_PG_PORT=5433 MDHPP_PG_DB=mdhpp_test \
+		MDHPP_PG_USER=mdhpp MDHPP_PG_PASSWORD=mdhpp \
+		uv run pytest -m integration
 
-test-integration-keep: ## Same as test-integration but leaves pgvector running
-	@echo "Starting pgvector..."
-	docker compose up -d db
-	@until docker compose exec -T db pg_isready -U mdhpp -d mdhpp >/dev/null 2>&1; do \
+test-integration-keep: ## Same as test-integration but leaves the test DB running
+	docker compose -p mdhpp-test -f docker-compose.test.yml up -d
+	@until docker compose -p mdhpp-test -f docker-compose.test.yml \
+		exec -T policy-db-test pg_isready -U mdhpp -d mdhpp_test >/dev/null 2>&1; do \
 		sleep 1; \
 	done
-	uv run pytest -m integration
+	MDHPP_PG_HOST=localhost MDHPP_PG_PORT=5433 MDHPP_PG_DB=mdhpp_test \
+		MDHPP_PG_USER=mdhpp MDHPP_PG_PASSWORD=mdhpp \
+		uv run pytest -m integration
+
+test-plane-down: ## Tear down the ephemeral test plane (if left running)
+	docker compose -p mdhpp-test -f docker-compose.test.yml down -v
 
 # The gate CI runs: lint, format-check, types, unit. Run before pushing.
 check: ## Full local gate: ruff + format-check + mypy + unit tests
@@ -57,10 +66,10 @@ check: ## Full local gate: ruff + format-check + mypy + unit tests
 
 # ---- docker / data plane --------------------------------------------------
 db-up: ## Start only pgvector (schema auto-applied on first boot)
-	docker compose up -d db
+	docker compose up -d policy-db
 
 db-down: ## Stop pgvector
-	docker compose stop db
+	docker compose stop policy-db
 
 up: ## Start the full stack (app on http://localhost via nginx :80)
 	docker compose up
@@ -68,7 +77,7 @@ up: ## Start the full stack (app on http://localhost via nginx :80)
 down: ## Stop and remove the stack
 	docker compose down
 
-build: ## Rebuild the backend image
+build: ## Rebuild the policy-api image
 	docker compose build
 
 # ---- app ------------------------------------------------------------------

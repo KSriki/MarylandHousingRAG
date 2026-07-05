@@ -1,0 +1,31 @@
+# Ephemeral test plane — isolated from the dev stack in docker-compose.yml.
+#
+# Differences from the dev compose:
+#   - no persistent volume: the DB is torn down clean after each run, so tests
+#     never pollute (or get polluted by) your dev data
+#   - distinct host port (5433) so it can run alongside a dev DB on 5432
+#   - tmpfs data dir: fast, RAM-backed, discarded on stop
+#
+# Brought up/torn down by `make test-integration`. Uses a separate compose
+# project name so its containers/network don't collide with the dev stack.
+
+services:
+  policy-db-test:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: mdhpp_test
+      POSTGRES_USER: mdhpp
+      POSTGRES_PASSWORD: mdhpp
+    # Schema auto-applied on first boot; no named volume, so state is ephemeral.
+    volumes:
+      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
+    # RAM-backed data dir: fast and self-cleaning.
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mdhpp -d mdhpp_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+    ports:
+      - "5433:5432"
