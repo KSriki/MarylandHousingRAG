@@ -8,6 +8,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import trafilatura
+from pypdf import PdfReader
+
 
 def read_file(path: Path) -> str:
     """Extract plain text from a source file, dispatched by extension."""
@@ -22,15 +25,11 @@ def read_file(path: Path) -> str:
 
 
 def _read_pdf(path: Path) -> str:
-    from pypdf import PdfReader
-
     reader = PdfReader(str(path))
     return "\n".join(page.extract_text() or "" for page in reader.pages)
 
 
 def _read_html(path: Path) -> str:
-    import trafilatura
-
     raw = path.read_text(encoding="utf-8")
     extracted = trafilatura.extract(raw)
     if extracted is None:

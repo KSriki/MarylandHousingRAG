@@ -1,7 +1,9 @@
-"""Entry point for `serve` (see api pyproject [project.scripts]).
+"""Entry point for the API.
 
-Runs the FastAPI app under uvicorn. Host/port are fixed to the container's
-internal interface; the reverse proxy (policy-proxy) fronts it on :80.
+Exposed two ways: the `serve` console script (api pyproject [project.scripts])
+and `mdhpp serve` (the umbrella CLI, which calls this). Also runnable as
+`python -m mdhpp_api`. Runs the FastAPI app under uvicorn; host/port are
+container-internal and the reverse proxy fronts it on :80.
 """
 
 from __future__ import annotations

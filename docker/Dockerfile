@@ -22,8 +22,11 @@ COPY packages/api/pyproject.toml packages/api/pyproject.toml
 
 # Then the source, then a scoped sync so only the API closure installs.
 COPY packages/ packages/
-# Install only the API package's dependency closure (not the whole workspace),
-# so the image doesn't pull ingestion-only heavy deps like torch/FlagEmbedding.
+# Install only the API package's dependency closure (core + retrieval + fastapi),
+# not the whole workspace. As of Phase 3 the API embeds the query at request
+# time, so retrieval's FlagEmbedding/torch ARE part of this closure — the CPU
+# torch pin in the root pyproject keeps that download to ~200MB instead of the
+# ~1.5GB CUDA build.
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --package mdhpp-api
 
@@ -46,7 +49,7 @@ USER app
 
 EXPOSE 8000
 
-# Overridable; docker-compose sets the concrete command per service.
-# Run the API directly via uvicorn (not the root `mdhpp` umbrella command,
-# which would pull ingestion's heavy deps this image intentionally omits).
-CMD ["uvicorn", "mdhpp_api.app:app", "--host", "0.0.0.0", "--port", "8000"]
+# Overridable; docker-compose can set a per-service command.
+# Uses the `serve` console script (api pyproject [project.scripts]), which runs
+# uvicorn against the app. The reverse proxy fronts this on :80.
+CMD ["serve"]

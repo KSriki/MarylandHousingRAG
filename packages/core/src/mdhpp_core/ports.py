@@ -7,6 +7,7 @@ wiring change in the imperative shell, not a code change in the core.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from typing import Protocol, runtime_checkable
 
 from mdhpp_core.models import Chunk, RetrievalResult
@@ -32,4 +33,18 @@ class Reranker(Protocol):
 
     def rerank(self, query: str, chunks: list[Chunk], top_k: int) -> RetrievalResult:
         """Return the top_k chunks re-scored for relevance to `query`."""
+        ...
+
+
+@runtime_checkable
+class Generator(Protocol):
+    """Streams a grounded answer from a prompt.
+
+    Provider-agnostic: the concrete implementation (Ollama, an API, etc.) lives
+    in the retrieval package's shell. Yields text deltas so the API can forward
+    them over SSE as they're produced.
+    """
+
+    def generate(self, prompt: str) -> Iterator[str]:
+        """Yield answer text chunks (deltas) for the given prompt."""
         ...

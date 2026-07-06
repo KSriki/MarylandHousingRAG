@@ -11,6 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import tiktoken
+
 from mdhpp_core import Embedder, Settings
 from mdhpp_ingestion.chunk import TokenCodec, chunk_sections
 from mdhpp_ingestion.parse import parse_sections
@@ -28,8 +30,6 @@ class IngestReport:
 
 
 def _tiktoken_codec() -> TokenCodec:
-    import tiktoken
-
     enc = tiktoken.get_encoding("cl100k_base")
     return TokenCodec(encode=enc.encode, decode=enc.decode)
 

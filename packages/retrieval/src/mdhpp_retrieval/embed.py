@@ -8,7 +8,10 @@ vector spaces.
 
 from __future__ import annotations
 
-from FlagEmbedding import BGEM3FlagModel
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from FlagEmbedding import BGEM3FlagModel
 
 
 class BGEM3Embedder:
@@ -24,6 +27,8 @@ class BGEM3Embedder:
 
     def _ensure_model(self) -> BGEM3FlagModel:
         if self._model is None:
+            from FlagEmbedding import BGEM3FlagModel
+
             self._model = BGEM3FlagModel(self._model_name, use_fp16=True)
         return self._model
 

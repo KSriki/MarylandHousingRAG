@@ -36,6 +36,8 @@ dev = [
     "types-psycopg2>=2.9.0",
     "httpx>=0.28.1",
 ]
+# Docs toolchain — MkDocs Material + auto API reference. Installed on demand
+# with `uv sync --group docs` (kept out of the default dev install).
 docs = [
     "mkdocs>=1.6",
     "mkdocs-material>=9.5",
@@ -44,6 +46,30 @@ docs = [
 
 [tool.uv.workspace]
 members = ["packages/*"]
+
+[tool.uv]
+# CPU-only torch. retrieval pulls torch via FlagEmbedding; on Linux, PyPI's
+# torch declares the nvidia/CUDA libraries as dependencies (~1.5GB we have no
+# GPU for). Override each to an impossible marker so it resolves to nothing on
+# every platform, leaving torch to install its CPU form. (This uv version does
+# not support the newer `torch-backend` key.)
+override-dependencies = [
+    "nvidia-cublas-cu12; sys_platform == 'never'",
+    "nvidia-cuda-cupti-cu12; sys_platform == 'never'",
+    "nvidia-cuda-nvrtc-cu12; sys_platform == 'never'",
+    "nvidia-cuda-runtime-cu12; sys_platform == 'never'",
+    "nvidia-cudnn-cu12; sys_platform == 'never'",
+    "nvidia-cufft-cu12; sys_platform == 'never'",
+    "nvidia-cufile-cu12; sys_platform == 'never'",
+    "nvidia-curand-cu12; sys_platform == 'never'",
+    "nvidia-cusolver-cu12; sys_platform == 'never'",
+    "nvidia-cusparse-cu12; sys_platform == 'never'",
+    "nvidia-cusparselt-cu12; sys_platform == 'never'",
+    "nvidia-nccl-cu12; sys_platform == 'never'",
+    "nvidia-nvjitlink-cu12; sys_platform == 'never'",
+    "nvidia-nvshmem-cu12; sys_platform == 'never'",
+    "nvidia-nvtx-cu12; sys_platform == 'never'",
+]
 
 [tool.uv.sources]
 mdhpp-core = { workspace = true }
@@ -65,9 +91,15 @@ ignore = ["PLR2004", "PLR0913"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["PLR2004", "S101"]
+# Test files: allow assert, magic values, inlineable lambdas (fixture stubs),
+# and lazy imports inside fixtures/helpers.
+"packages/*/tests/**" = ["PLR2004", "S101", "PLW0108", "PLC0415"]
 # Typer CLI dispatch: PLC0415 (subcommand impls are imported lazily inside
 # handlers, by design) and B008 (typer.Option(...) in defaults is Typer's API).
 "src/mdhpp/**" = ["PLC0415", "B008"]
+# The API lazy-imports heavy model deps inside handlers so the module and
+# healthcheck stay light (torch isn't loaded until the first /ask request).
+"packages/api/src/mdhpp_api/app.py" = ["PLC0415"]
 
 # ----------------------------------------------------------------------------
 # mypy — strict, workspace-wide.
