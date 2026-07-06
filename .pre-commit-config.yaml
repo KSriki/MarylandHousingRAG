@@ -18,7 +18,7 @@ repos:
       # sync. Identical to what `make check` and CI run.
       - id: mypy
         name: mypy (strict, via uv)
-        entry: uv run --no-sync mypy packages/core/src packages/ingestion/src packages/retrieval/src packages/api/src
+        entry: uv run mypy src packages/core/src packages/ingestion/src packages/retrieval/src packages/api/src
         language: system
         types: [python]
         pass_filenames: false
@@ -28,5 +28,9 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-yaml
+        # --unsafe: syntax-check only, without constructing Python objects.
+        # mkdocs.yml uses `!!python/name:...` tags (required for mermaid) that
+        # the default safe loader rejects. This still catches real syntax errors.
+        args: [--unsafe]
       - id: check-added-large-files
         args: [--maxkb=500]

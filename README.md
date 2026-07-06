@@ -9,7 +9,7 @@ retrieved source with a forced citation, and unsupported questions get "I can't 
 in the sources" instead of a guess. That behavior is the compliance boundary, not a UX
 preference.
 
-See `docs/design-doc.md` for the full architecture rationale.
+See `docs/architecture/overview.md` for the full architecture rationale.
 
 ## Stack
 

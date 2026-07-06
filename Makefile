@@ -4,7 +4,7 @@
 .DEFAULT_GOAL := help
 .PHONY: help install sync hooks lint format typecheck \
         test test-unit test-integration test-integration-keep test-plane-down check \
-        db-up db-down up down build ingest serve clean
+        db-up db-down up down build ingest serve docs-serve docs-build clean
 
 # ---- setup ----------------------------------------------------------------
 install sync: ## Resolve + install the uv workspace (single lockfile)
@@ -86,6 +86,13 @@ ingest: ## Run the ingestion pipeline over corpus/ (Phase 2+)
 
 serve: ## Run the FastAPI app locally (Phase 3+)
 	uv run mdhpp serve
+
+# ---- docs ------------------------------------------------------------------
+docs-serve: ## Serve the docs locally with live reload (http://localhost:8000)
+	uv run --group docs mkdocs serve
+
+docs-build: ## Build the static docs site into ./site
+	uv run --group docs mkdocs build --strict
 
 # ---- housekeeping ---------------------------------------------------------
 clean: ## Remove caches and build artifacts (keeps the venv)

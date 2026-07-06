@@ -38,3 +38,6 @@ corpus/*.html
 
 # OS
 .DS_Store
+
+# mkdocs
+site/
