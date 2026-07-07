@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens as HSL channels so Tailwind's hsl(var(--x)) works and a light
+   theme can be added by overriding these on a :root[data-theme="light"]. */
+:root {
+  --bg:         218 21% 10%;   /* deep slate-navy — civic, not black */
+  --surface:    218 21% 14%;
+  --surface-2:  218 20% 18%;
+  --border:     215 18% 23%;
+  --text:       44 20% 89%;    /* warm off-white for long reading */
+  --text-dim:   214 10% 66%;
+  --text-faint: 212 8% 46%;
+  --accent:     40 52% 57%;    /* muted parchment gold */
+  --accent-dim: 42 37% 39%;
+  --danger:     13 42% 63%;    /* muted clay for the disclaimer */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-bg text-text font-serif antialiased;
+    font-size: 17px;
+    line-height: 1.6;
+  }
+  ::placeholder {
+    @apply text-text-faint;
+  }
+  /* Visible keyboard focus everywhere (accessibility floor). */
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent-dim ring-offset-2 ring-offset-bg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Streaming caret shown while tokens arrive. */
+.stream-caret::after {
+  content: "▋";
+  @apply text-accent;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}

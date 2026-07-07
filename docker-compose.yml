@@ -34,6 +34,11 @@ services:
       MDHPP_PG_DB: ${MDHPP_PG_DB:-mdhpp}
       MDHPP_PG_USER: ${MDHPP_PG_USER:-mdhpp}
       MDHPP_PG_PASSWORD: ${MDHPP_PG_PASSWORD:-mdhpp}
+      # Reach Ollama running on the host (Docker Desktop maps this to the host).
+      MDHPP_LLM_HOST: ${MDHPP_LLM_HOST:-http://host.docker.internal:11434}
+    # Makes host.docker.internal resolve on Linux too (automatic on Mac/Windows).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     # Model + HF caches live in named volumes so weights are downloaded once
     # and never copied into the image (keeps builds fast, layers small).
     volumes:
@@ -56,17 +61,63 @@ services:
       retries: 5
       start_period: 20s
 
+  # --- policy-web: builds the frontend and publishes it to the web volume ---
+  policy-web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    volumes:
+      - policy_web_dist:/usr/share/nginx/html
+    # One-shot publish then idles; proxy serves the volume it populated.
+
+  # --- policy-modelwarm: one-shot pre-download of model weights -------------
+  # Run explicitly once per environment to warm the cache volumes before
+  # serving traffic:  docker compose run --rm policy-modelwarm
+  # Uses the same image + cache volumes as policy-api, so weights it downloads
+  # are exactly what the API reads. Not started by `up` (profile-gated).
+  policy-modelwarm:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    profiles: ["tools"]
+    environment:
+      HF_HOME: /home/app/.cache/huggingface
+    volumes:
+      - policy_hf_cache:/home/app/.cache/huggingface
+      - policy_model_cache:/home/app/.cache/mdhpp
+    command:
+      - python
+      - -c
+      - |
+        from mdhpp_core import load_settings, Chunk, Citation
+        from mdhpp_retrieval.embed import BGEM3Embedder
+        from mdhpp_retrieval.rerank import BGEReranker
+        s = load_settings()
+        print(f"downloading embedder {s.embedding_model}...", flush=True)
+        BGEM3Embedder(s.embedding_model).embed(["warm up"])
+        print(f"downloading reranker {s.reranker_model}...", flush=True)
+        w = Chunk(id="w", text="w", citation=Citation(doc="w", section="w", breadcrumb="w", url=None, snippet="warm up"))
+        BGEReranker(s.reranker_model).rerank("warm up", [w], top_k=1)
+        print("model cache warmed.", flush=True)
+
   # --- policy-proxy: single-port reverse proxy (/api -> api, / -> web) ------
   policy-proxy:
     image: nginx:1.27-alpine
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - policy_web_dist:/usr/share/nginx/html:ro
+      # TLS material: put fullchain.pem + privkey.pem in ./nginx/certs.
+      - ./nginx/certs:/etc/nginx/certs:ro
+      # ACME http-01 challenge webroot (for Let's Encrypt renewals).
+      - ./nginx/certbot:/var/www/certbot
     depends_on:
       policy-api:
         condition: service_healthy
+      policy-web:
+        condition: service_started
     ports:
       - "80:80"
+      - "443:443"
     restart: unless-stopped
 
 volumes:

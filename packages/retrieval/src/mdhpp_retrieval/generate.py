@@ -50,14 +50,14 @@ class OllamaGenerator:
                     break
 
 
-def make_generator(settings: Settings, host: str = "http://localhost:11434") -> Generator:
+def make_generator(settings: Settings, host: str | None = None) -> Generator:
     """Build the configured generator. Currently supports the Ollama provider."""
     provider = settings.llm_provider.lower()
     if provider == "ollama":
         return OllamaGenerator(
             model=settings.llm_model,
             temperature=settings.llm_temperature,
-            host=host,
+            host=host or settings.llm_host,
         )
     raise ValueError(
         f"Unsupported llm_provider: {settings.llm_provider!r}. "

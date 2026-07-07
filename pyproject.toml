@@ -48,34 +48,22 @@ docs = [
 members = ["packages/*"]
 
 [tool.uv]
-# CPU-only torch. retrieval pulls torch via FlagEmbedding; on Linux, PyPI's
-# torch declares the nvidia/CUDA libraries as dependencies (~1.5GB we have no
-# GPU for). Override each to an impossible marker so it resolves to nothing on
-# every platform, leaving torch to install its CPU form. (This uv version does
-# not support the newer `torch-backend` key.)
-override-dependencies = [
-    "nvidia-cublas-cu12; sys_platform == 'never'",
-    "nvidia-cuda-cupti-cu12; sys_platform == 'never'",
-    "nvidia-cuda-nvrtc-cu12; sys_platform == 'never'",
-    "nvidia-cuda-runtime-cu12; sys_platform == 'never'",
-    "nvidia-cudnn-cu12; sys_platform == 'never'",
-    "nvidia-cufft-cu12; sys_platform == 'never'",
-    "nvidia-cufile-cu12; sys_platform == 'never'",
-    "nvidia-curand-cu12; sys_platform == 'never'",
-    "nvidia-cusolver-cu12; sys_platform == 'never'",
-    "nvidia-cusparse-cu12; sys_platform == 'never'",
-    "nvidia-cusparselt-cu12; sys_platform == 'never'",
-    "nvidia-nccl-cu12; sys_platform == 'never'",
-    "nvidia-nvjitlink-cu12; sys_platform == 'never'",
-    "nvidia-nvshmem-cu12; sys_platform == 'never'",
-    "nvidia-nvtx-cu12; sys_platform == 'never'",
-]
-
+# CPU-only torch. retrieval pulls torch via FlagEmbedding; the default Linux
+# build declares ~1.5GB of CUDA deps (cuda-toolkit, nvidia-*, triton) we have
+# no GPU for. Pinning torch to PyTorch's CPU index resolves a build that
+# declares none of them — far more robust than excluding CUDA packages by name
+# (their names change every torch release).
 [tool.uv.sources]
 mdhpp-core = { workspace = true }
 mdhpp-ingestion = { workspace = true }
 mdhpp-retrieval = { workspace = true }
 mdhpp-api = { workspace = true }
+torch = [{ index = "pytorch-cpu" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 # ----------------------------------------------------------------------------
 # Ruff — lint + format, applied across the workspace.

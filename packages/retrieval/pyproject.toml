@@ -8,6 +8,11 @@ dependencies = [
     "psycopg[binary]>=3.2.0",
     "pgvector>=0.3.0",
     "FlagEmbedding>=1.2",
+    # FlagEmbedding 1.4 uses the pre-5.x tokenizer API (prepare_for_model on the
+    # slow tokenizer), which transformers 5.x removed — causing
+    # "XLMRobertaTokenizer has no attribute prepare_for_model" in the reranker.
+    # Pin to the 4.x line until FlagEmbedding supports transformers 5.
+    "transformers>=4.40,<5",
 ]
 
 [build-system]

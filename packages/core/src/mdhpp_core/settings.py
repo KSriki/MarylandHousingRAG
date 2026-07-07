@@ -46,6 +46,13 @@ class Settings(BaseSettings):
     llm_provider: str = Field("ollama", description="ollama | openai | anthropic")
     llm_model: str = Field("llama3.1:8b")
     llm_temperature: float = Field(0.1)
+    llm_host: str = Field(
+        "http://localhost:11434",
+        description=(
+            "LLM server URL. In Docker on Mac/Windows, set to "
+            "http://host.docker.internal:11434 to reach Ollama on the host."
+        ),
+    )
 
     # --- Guardrail -----------------------------------------------------------
     disclaimer: str = Field(

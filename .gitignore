@@ -41,3 +41,9 @@ corpus/*.html
 
 # mkdocs
 site/
+
+# TLS certs (never commit)
+nginx/certs/*
+!nginx/certs/.gitkeep
+nginx/certbot/*
+!nginx/certbot/.gitkeep

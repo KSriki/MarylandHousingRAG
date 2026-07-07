@@ -58,5 +58,17 @@ def serve(
     _serve.run(host=host, port=port)
 
 
+@app.command(name="download-models")
+def download_models() -> None:
+    """Pre-download embedder + reranker weights into the model cache volume.
+
+    Run once per environment after deploy so the first /api/ask request doesn't
+    pay the model-download cost mid-request.
+    """
+    from mdhpp._impl import download_models as _dl
+
+    _dl.run()
+
+
 if __name__ == "__main__":
     app()

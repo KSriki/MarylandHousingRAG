@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/components/citationcard.tsx","./src/lib/useask.ts","./src/lib/usehistory.ts","./src/lib/usesources.ts","./src/lib/utils.ts","./src/pages/askpage.tsx","./src/pages/historypage.tsx","./src/pages/sourcespage.tsx"],"version":"5.9.3"}
