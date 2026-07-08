@@ -16,7 +16,7 @@ interface Props {
 
 export function AskPage({ onAsked, initialQuestion }: Props) {
   const [input, setInput] = useState("");
-  const { status, answer, citations, disclaimer, error, ask, reset } = useAsk();
+  const { status, answer, citations, disclaimer, error, stage, ask, reset } = useAsk();
 
   const submit = (q: string) => {
     const question = q.trim();
@@ -114,11 +114,20 @@ export function AskPage({ onAsked, initialQuestion }: Props) {
                 status === "streaming" ? "stream-caret" : ""
               }`}
             >
-              {answer.split("\n").filter(Boolean).map((p, i) => (
-                <p key={i} className="mb-4">
-                  {p}
-                </p>
-              ))}
+              {answer ? (
+                answer
+                  .split("\n")
+                  .filter(Boolean)
+                  .map((p, i) => (
+                    <p key={i} className="mb-4">
+                      {p}
+                    </p>
+                  ))
+              ) : stage === "generating" ? (
+                <span className="inline-flex items-center gap-2 text-text-faint">
+                  <span className="stream-caret">Reading the statute and drafting guidance…</span>
+                </span>
+              ) : null}
             </div>
           )}
 

@@ -35,7 +35,11 @@ class BGEReranker:
             return RetrievalResult(chunks=[], scores=[])
 
         model = self._ensure_model()
-        pairs = [[query, c.citation.snippet] for c in chunks]
+        # Rerank against the full chunk text, not the truncated citation snippet.
+        # The snippet is just a short preview (often definitional boilerplate like
+        # "In this section the following words..."), which gives the cross-encoder
+        # nothing to match against and collapses all scores toward zero.
+        pairs = [[query, c.text] for c in chunks]
         raw = model.compute_score(pairs, normalize=True)
         scores = [float(s) for s in raw] if isinstance(raw, list) else [float(raw)]
 

@@ -17,8 +17,24 @@ import re
 from dataclasses import dataclass
 
 # Matches statute section refs: "§ 11B-111", "11B-111.", "§14-203", etc.
-# Group 'ref' is the normalized section number (letters/digits/hyphens).
-_SECTION_RE = re.compile(r"^\s*(?:§\s*)?(?P<ref>\d+[A-Za-z]?-\d+(?:\.\d+)?)\.?\s*(?P<heading>.*)$")
+# Maryland's official PDFs use an EN-DASH (U+2013) in section numbers
+# (e.g. section 11B followed by U+2013 then 104), not an ASCII hyphen, so the
+# separator class accepts hyphen, en-dash, and em-dash. The captured ref is
+# normalized to an ASCII hyphen in _normalize_ref so citations are consistent.
+_DASHES = "\\-\u2013\u2014"  # -, en-dash, em-dash
+_SECTION_RE = re.compile(
+    rf"^\s*(?:§\s*)?(?P<ref>\d+[A-Za-z]?[{_DASHES}]\d+(?:\.\d+)?)\.?\s*(?P<heading>.*)$"
+)
+
+
+def _normalize_ref(ref: str) -> str:
+    """Normalize a captured section ref to use ASCII hyphens.
+
+    The source PDFs use en-dashes; downstream citations and chunk ids should be
+    stable ASCII (e.g. "11B-111"), so callers and stored data don't depend on
+    the source's dash style.
+    """
+    return ref.replace("\u2013", "-").replace("\u2014", "-")
 
 
 @dataclass(frozen=True)
@@ -68,11 +84,12 @@ def parse_sections(text: str, doc_title: str) -> list[Section]:
     for line in lines:
         m = _SECTION_RE.match(line)
         # Treat as a section header only if the ref looks like a real statute
-        # number (has a hyphen) and the line isn't absurdly long (a paragraph
-        # that merely starts with a number).
-        if m and "-" in m.group("ref") and len(line) < 120:
+        # number (contains a dash separator) and the line isn't absurdly long (a
+        # paragraph that merely starts with a number). Accept any dash style;
+        # the source PDFs use en-dashes.
+        if m and any(d in m.group("ref") for d in ("-", "\u2013", "\u2014")) and len(line) < 120:
             flush()
-            current_ref = m.group("ref")
+            current_ref = _normalize_ref(m.group("ref"))
             current_heading = m.group("heading").strip()
             current_body = []
         elif current_ref is not None:

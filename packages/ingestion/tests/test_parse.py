@@ -57,3 +57,21 @@ def test_long_line_starting_with_number_is_not_a_header() -> None:
     # Only the real header creates a section; the long line stays as body.
     assert len(sections) == 1
     assert sections[0].ref == "11B-101"
+
+
+def test_parses_en_dash_section_refs() -> None:
+    """Maryland's official PDFs use en-dashes (U+2013) in section numbers.
+
+    The parser must detect these as headers and normalize the ref to an ASCII
+    hyphen so citations are consistent regardless of the source's dash style.
+    """
+    text = (
+        "\u00a711B\u2013104.\n"
+        "(a) Building codes shall have full force and effect.\n"
+        "\u00a711B\u2013105.\n"
+        "(a) Initial sale of lots.\n"
+    )
+    sections = parse_sections(text, "MD HOA Act")
+    assert [s.ref for s in sections] == ["11B-104", "11B-105"]
+    # refs are normalized to ASCII hyphens, not en-dashes
+    assert all("\u2013" not in s.ref for s in sections)

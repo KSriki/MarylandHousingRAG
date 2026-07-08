@@ -36,6 +36,8 @@ services:
       MDHPP_PG_PASSWORD: ${MDHPP_PG_PASSWORD:-mdhpp}
       # Reach Ollama running on the host (Docker Desktop maps this to the host).
       MDHPP_LLM_HOST: ${MDHPP_LLM_HOST:-http://host.docker.internal:11434}
+      # Model must match one pulled on the host (`ollama list`).
+      MDHPP_LLM_MODEL: ${MDHPP_LLM_MODEL:-llama3.2:3b}
     # Makes host.docker.internal resolve on Linux too (automatic on Mac/Windows).
     extra_hosts:
       - "host.docker.internal:host-gateway"

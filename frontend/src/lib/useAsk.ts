@@ -13,6 +13,7 @@ export interface AskState {
   citations: Citation[];
   disclaimer: string | null;
   error: string | null;
+  stage: string | null;
 }
 
 const INITIAL: AskState = {
@@ -21,6 +22,7 @@ const INITIAL: AskState = {
   citations: [],
   disclaimer: null,
   error: null,
+  stage: null,
 };
 
 /**
@@ -109,12 +111,14 @@ function handleFrame(frame: string, setState: React.Dispatch<React.SetStateActio
   }
 
   if (event === "token") {
-    setState((s) => ({ ...s, answer: s.answer + (payload.text as string) }));
+    setState((s) => ({ ...s, answer: s.answer + (payload.text as string), stage: null }));
   } else if (event === "citation") {
     setState((s) => ({
       ...s,
       citations: [...s.citations, payload as unknown as Citation],
     }));
+  } else if (event === "status") {
+    setState((s) => ({ ...s, stage: payload.stage as string }));
   } else if (event === "done") {
     setState((s) => ({ ...s, status: "done", disclaimer: payload.disclaimer as string }));
   }

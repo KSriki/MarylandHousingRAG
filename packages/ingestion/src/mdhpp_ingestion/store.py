@@ -66,6 +66,23 @@ def upsert_chunks(
     return len(chunks)
 
 
+def existing_ids(dsn: str, ids: list[str]) -> set[str]:
+    """Return the subset of `ids` already present in the index.
+
+    Lets the pipeline skip re-embedding chunks whose content is unchanged (the
+    id is a content hash), so re-running ingest over an already-populated corpus
+    only embeds new or amended chunks instead of the whole set.
+    """
+    if not ids:
+        return set()
+    with psycopg.connect(dsn) as conn:
+        rows = conn.execute(
+            "SELECT id FROM chunks WHERE id = ANY(%s)",
+            (ids,),
+        ).fetchall()
+    return {r[0] for r in rows}
+
+
 def prune_missing(dsn: str, doc: str, keep_ids: list[str]) -> int:
     """Delete chunks for `doc` whose id is not in `keep_ids` (removed content).
 

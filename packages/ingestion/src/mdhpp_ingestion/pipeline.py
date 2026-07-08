@@ -11,13 +11,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-import tiktoken
-
 from mdhpp_core import Embedder, Settings
 from mdhpp_ingestion.chunk import TokenCodec, chunk_sections
 from mdhpp_ingestion.parse import parse_sections
 from mdhpp_ingestion.readers import doc_title_from_path, read_file
-from mdhpp_ingestion.store import prune_missing, upsert_chunks
+from mdhpp_ingestion.store import existing_ids, prune_missing, upsert_chunks
 
 
 @dataclass(frozen=True)
@@ -30,6 +28,8 @@ class IngestReport:
 
 
 def _tiktoken_codec() -> TokenCodec:
+    import tiktoken
+
     enc = tiktoken.get_encoding("cl100k_base")
     return TokenCodec(encode=enc.encode, decode=enc.decode)
 
@@ -54,15 +54,24 @@ def ingest_file(
         overlap=settings.chunk_overlap_tokens,
     )
 
-    # Embed in the shell, attaching vectors + model tag to each chunk.
-    vectors = embedder.embed([c.text for c in chunks])
-    embedded = [
-        c.model_copy(update={"embedding": v, "embedding_model": embedder.model_name})
-        for c, v in zip(chunks, vectors, strict=True)
-    ]
+    # Skip embedding chunks already stored unchanged (id is a content hash), so
+    # re-ingesting an already-populated corpus only embeds new/amended chunks.
+    all_ids = [c.id for c in chunks]
+    have = existing_ids(settings.pg_dsn, all_ids)
+    todo = [c for c in chunks if c.id not in have]
 
-    written = upsert_chunks(settings.pg_dsn, embedded, embedder.model_name)
-    pruned = prune_missing(settings.pg_dsn, doc, [c.id for c in embedded])
+    written = 0
+    if todo:
+        vectors = embedder.embed([c.text for c in todo])
+        embedded = [
+            c.model_copy(update={"embedding": v, "embedding_model": embedder.model_name})
+            for c, v in zip(todo, vectors, strict=True)
+        ]
+        written = upsert_chunks(settings.pg_dsn, embedded, embedder.model_name)
+
+    # Prune against the FULL id set (not just newly embedded) so unchanged chunks
+    # are kept and only genuinely removed sections are deleted.
+    pruned = prune_missing(settings.pg_dsn, doc, all_ids)
 
     return IngestReport(doc=doc, chunks_written=written, chunks_pruned=pruned)
 

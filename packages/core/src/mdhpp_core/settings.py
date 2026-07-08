@@ -39,7 +39,13 @@ class Settings(BaseSettings):
     retrieve_top_k: int = Field(20)
     rerank_top_k: int = Field(5)
     relevance_floor: float = Field(
-        0.30, description="Below this rerank score, refuse rather than guess."
+        0.02,
+        description=(
+            "Below this rerank score, refuse rather than guess. Tuned to the BGE "
+            "cross-encoder's distribution for colloquial-question vs formal-"
+            "statute matching, where a correct-but-lexically-distant match scores "
+            "~0.05 while off-topic noise scores ~0.0001. Env: MDHPP_RELEVANCE_FLOOR."
+        ),
     )
 
     # --- Generation ----------------------------------------------------------

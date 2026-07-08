@@ -20,6 +20,7 @@ from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 from mdhpp_core import Embedder, Generator, Reranker, load_settings
+from mdhpp_retrieval import GenerationError
 
 
 class AskRequest(BaseModel):
@@ -63,6 +64,41 @@ def create_app() -> FastAPI:
     def healthcheck() -> dict[str, str]:
         """Liveness probe. Used by the container healthcheck and the proxy."""
         return {"status": "ok"}
+
+    @app.get("/api/sources")
+    def sources() -> dict[str, list[dict[str, object]]]:
+        """List the documents in the corpus, with chunk counts.
+
+        Powers the sources browser so users can see what the system knows
+        before asking. Reads distinct docs from the index.
+        """
+        import psycopg
+
+        try:
+            with psycopg.connect(settings.pg_dsn, connect_timeout=2) as conn:
+                rows = conn.execute(
+                    """
+                    SELECT doc, jurisdiction, count(*) AS chunks,
+                           count(DISTINCT section) AS sections
+                    FROM chunks
+                    GROUP BY doc, jurisdiction
+                    ORDER BY doc
+                    """
+                ).fetchall()
+        except psycopg.OperationalError:
+            return {"sources": []}
+
+        return {
+            "sources": [
+                {
+                    "doc": r[0],
+                    "jurisdiction": r[1],
+                    "chunks": r[2],
+                    "sections": r[3],
+                }
+                for r in rows
+            ]
+        }
 
     @app.post("/api/ask")
     async def ask(req: AskRequest) -> EventSourceResponse:
@@ -110,8 +146,37 @@ def create_app() -> FastAPI:
                     ),
                 }
 
-            for token in components.generator.generate(outcome.prompt):
-                yield {"event": "token", "data": json.dumps({"text": token})}
+            # Signal generation is starting. Fills the gap between citations
+            # appearing and the first token (the model's first-token latency),
+            # so the UI can show progress instead of dead air.
+            yield {"event": "status", "data": json.dumps({"stage": "generating"})}
+
+            first_token_seen = False
+            try:
+                for token in components.generator.generate(outcome.prompt):
+                    first_token_seen = True
+                    yield {"event": "token", "data": json.dumps({"text": token})}
+            except GenerationError as exc:
+                first_token_seen = True
+                yield {
+                    "event": "token",
+                    "data": json.dumps({"text": f"\n\n[The answer could not be generated. {exc}]"}),
+                }
+
+            # Retrieval cleared the floor (citations shown) but the model produced
+            # nothing usable — tell the user rather than leaving a blank answer.
+            if not first_token_seen:
+                yield {
+                    "event": "token",
+                    "data": json.dumps(
+                        {
+                            "text": "I found related sections (see the sources) but "
+                            "couldn't extract a clear answer from them. The precise "
+                            "governing provision may be elsewhere; consider "
+                            "consulting a licensed Maryland attorney."
+                        }
+                    ),
+                }
 
             # Server-appended disclaimer: the model cannot suppress this.
             yield {

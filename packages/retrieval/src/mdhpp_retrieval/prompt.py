@@ -40,9 +40,7 @@ def build_prompt(question: str, chunks: list[Chunk]) -> str:
     context_blocks = []
     for i, chunk in enumerate(chunks, start=1):
         context_blocks.append(
-            f'<passage id="{i}" cite="{chunk.citation.breadcrumb}">\n'
-            f"{chunk.citation.snippet}\n"
-            f"</passage>"
+            f'<passage id="{i}" cite="{chunk.citation.breadcrumb}">\n{chunk.text}\n</passage>'
         )
     context = "\n".join(context_blocks) if context_blocks else "(no passages found)"
 

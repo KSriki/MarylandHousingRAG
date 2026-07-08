@@ -13,6 +13,14 @@ from collections.abc import Iterator
 from mdhpp_core import Generator, Settings
 
 
+class GenerationError(RuntimeError):
+    """Raised when the LLM server can't be reached or the model is unavailable.
+
+    Carries a user-facing message the API can surface instead of a raw
+    traceback.
+    """
+
+
 class OllamaGenerator:
     """Streams from a local Ollama server. Satisfies mdhpp_core.ports.Generator."""
 
@@ -23,6 +31,7 @@ class OllamaGenerator:
 
     def generate(self, prompt: str) -> Iterator[str]:
         import json
+        import urllib.error
         import urllib.request
 
         payload = json.dumps(
@@ -38,7 +47,24 @@ class OllamaGenerator:
             data=payload,
             headers={"Content-Type": "application/json"},
         )
-        with urllib.request.urlopen(req) as resp:
+        try:
+            resp = urllib.request.urlopen(req)
+        except urllib.error.HTTPError as exc:
+            if exc.code == 404:
+                raise GenerationError(
+                    f"The language model {self._model!r} was not found on the "
+                    f"Ollama server at {self._host}. Pull it with "
+                    f"`ollama pull {self._model}` or set MDHPP_LLM_MODEL to a "
+                    f"model you have (`ollama list`)."
+                ) from exc
+            raise GenerationError(f"The language model server returned HTTP {exc.code}.") from exc
+        except urllib.error.URLError as exc:
+            raise GenerationError(
+                f"Could not reach the language model server at {self._host}. "
+                f"Is Ollama running? ({exc.reason})"
+            ) from exc
+
+        with resp:
             for line in resp:
                 if not line.strip():
                     continue
