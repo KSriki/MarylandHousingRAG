@@ -121,8 +121,14 @@ def create_app() -> FastAPI:
                     "data": json.dumps(
                         {
                             "text": "I can't find governing policy for this in my "
-                            "sources. Consider consulting a licensed Maryland "
-                            "attorney or the relevant county office."
+                            "sources. My sources are Maryland state statute (the HOA, "
+                            "Condominium, and Contract Lien Acts), which set the rules "
+                            "an association must follow — but many specifics (fences, "
+                            "paint colors, parking, landscaping) are set by your "
+                            "community's own recorded covenants (CC&Rs), which I don't "
+                            "have. Check your community's declaration and bylaws, or "
+                            "consult a licensed Maryland attorney or the relevant "
+                            "county office."
                         }
                     ),
                 }
