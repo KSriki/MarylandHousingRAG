@@ -123,9 +123,13 @@ export function AskPage({ onAsked, initialQuestion }: Props) {
                       {p}
                     </p>
                   ))
-              ) : stage === "generating" ? (
+              ) : status === "streaming" ? (
                 <span className="inline-flex items-center gap-2 text-text-faint">
-                  <span className="stream-caret">Reading the statute and drafting guidance…</span>
+                  <span className="stream-caret">
+                    {stage === "generating"
+                      ? "Reading the statute and drafting guidance…"
+                      : "Searching the statute…"}
+                  </span>
                 </span>
               ) : null}
             </div>
