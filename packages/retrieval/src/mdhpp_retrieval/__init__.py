@@ -3,6 +3,7 @@
 from mdhpp_retrieval.embed import BGEM3Embedder
 from mdhpp_retrieval.generate import GenerationError, OllamaGenerator, make_generator
 from mdhpp_retrieval.hybrid import hybrid_search
+from mdhpp_retrieval.jurisdiction import detect_other_state
 from mdhpp_retrieval.orchestrator import RetrievalOutcome, retrieve
 from mdhpp_retrieval.prompt import build_prompt, has_grounding
 from mdhpp_retrieval.rerank import BGEReranker
@@ -14,6 +15,7 @@ __all__ = [
     "OllamaGenerator",
     "RetrievalOutcome",
     "build_prompt",
+    "detect_other_state",
     "has_grounding",
     "hybrid_search",
     "make_generator",

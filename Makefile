@@ -94,6 +94,12 @@ docs-serve: ## Serve the docs locally with live reload (http://localhost:8000)
 docs-build: ## Build the static docs site into ./site
 	uv run --group docs mkdocs build --strict
 
+eval: ## Deterministic retrieval eval (hit-rate, MRR, refusal accuracy). Needs the DB + models.
+	uv run python -m evals.retrieval_eval
+
+eval-faithfulness: ## RAGAS faithfulness eval (LLM-judged, needs Ollama + `--group eval`).
+	uv run --group eval python -m evals.faithfulness_eval
+
 # ---- housekeeping ---------------------------------------------------------
 clean: ## Remove caches and build artifacts (keeps the venv)
 	find . -type d -name __pycache__ -prune -exec rm -rf {} +

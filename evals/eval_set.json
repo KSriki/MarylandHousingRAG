@@ -1,0 +1,131 @@
+{
+  "_comment": "Maryland housing-law eval set. Two case kinds: 'retrieve' expects the given section(s) to appear in the reranked top-k above the relevance floor; 'refuse' expects the system to decline (out of corpus scope). Section labels are drawn from authoritative Maryland sources (Md People's Law Library, statute FAQs). Refine freely: add questions, correct sections, expand phrasing.",
+  "retrieve": [
+    {
+      "question": "What notice is required before an HOA meeting?",
+      "expected_sections": ["11B-111"],
+      "note": "Open-meeting / notice requirements."
+    },
+    {
+      "question": "Can I attend my HOA's board meetings?",
+      "expected_sections": ["11B-111"],
+      "note": "Open meetings."
+    },
+    {
+      "question": "Before the HOA can fine me, what process do they have to follow?",
+      "expected_sections": ["11B-111.10"],
+      "note": "Dispute settlement mechanism: no fine/suspension until these procedures (notice + opportunity to be heard) are followed. Effective Oct 1, 2022."
+    },
+    {
+      "question": "Do I get a hearing before the association imposes a fine?",
+      "expected_sections": ["11B-111.10"],
+      "note": "Due process for fines — 11B-111.10 dispute settlement procedures."
+    },
+    {
+      "question": "Can my HOA charge assessments and dues?",
+      "expected_sections": ["11B-117"],
+      "note": "Assessment authority."
+    },
+    {
+      "question": "Is the association allowed to levy a special assessment?",
+      "expected_sections": ["11B-117"],
+      "note": "Special assessments."
+    },
+    {
+      "question": "When I sell my house, what does the HOA have to give the buyer?",
+      "expected_sections": ["11B-106"],
+      "note": "Resale disclosure package."
+    },
+    {
+      "question": "What is in a resale disclosure package?",
+      "expected_sections": ["11B-106"],
+      "note": "Resale package contents."
+    },
+    {
+      "question": "How much advance notice do I get before the HOA adopts its annual budget?",
+      "expected_sections": ["11B-112.2"],
+      "note": "30-day budget notice."
+    },
+    {
+      "question": "Do I have the right to inspect the association's records?",
+      "expected_sections": ["11B-112"],
+      "note": "Records access."
+    },
+    {
+      "question": "How often does my HOA have to do a reserve study?",
+      "expected_sections": ["11B-112.3"],
+      "note": "Reserve study every 5 years."
+    },
+    {
+      "question": "Can my HOA stop me from installing solar panels?",
+      "expected_sections": ["2-119"],
+      "note": "Solar collector protection (Title 2)."
+    },
+    {
+      "question": "Is my homeowners association allowed to ban rooftop solar?",
+      "expected_sections": ["2-119"],
+      "note": "Solar restrictions."
+    },
+    {
+      "question": "Can the association put a lien on my home for unpaid assessments?",
+      "expected_sections": ["11B-117", "14-202", "14-203"],
+      "note": "HOA lien authority is 11B-117(b); the Contract Lien Act (14-2xx) is the attachment/enforcement mechanism."
+    },
+    {
+      "question": "How does the HOA foreclose on a lien?",
+      "expected_sections": ["14-204"],
+      "note": "Lien enforcement / foreclosure."
+    },
+    {
+      "question": "What notice does the association have to send before filing a lien?",
+      "expected_sections": ["14-203"],
+      "note": "Contract Lien Act notice."
+    },
+    {
+      "question": "Can I run a home-based business, or can the HOA prohibit it?",
+      "expected_sections": ["11B-111.1"],
+      "note": "No-impact home-based business."
+    },
+    {
+      "question": "Can the HOA stop me from putting up a political sign during election season?",
+      "expected_sections": ["11B-111.2"],
+      "note": "Candidate/political signs."
+    },
+    {
+      "question": "Can my HOA prohibit an electric vehicle charging station?",
+      "expected_sections": ["11B-111.8"],
+      "note": "EV recharging equipment."
+    },
+    {
+      "question": "What is the most the HOA can charge as a late fee?",
+      "expected_sections": ["11B-112.1"],
+      "note": "Late charge cap: $15 or 10% of the delinquent assessment, after 15 days (11B-112.1). NOT 11B-113, which is the HOA Depository."
+    }
+  ],
+  "refuse": [
+    {
+      "question": "I want to build a fence in my backyard. What is allowed?",
+      "note": "Fence specifics live in community CC&Rs, not state statute."
+    },
+    {
+      "question": "What color am I allowed to paint my front door?",
+      "note": "Paint/aesthetic rules are CC&R-specific."
+    },
+    {
+      "question": "Can I park my RV in my driveway?",
+      "note": "Parking rules are CC&R-specific."
+    },
+    {
+      "question": "What is the best pizza topping?",
+      "note": "Not a legal question at all."
+    },
+    {
+      "question": "How do I replace the brake pads on my car?",
+      "note": "Entirely out of domain."
+    },
+    {
+      "question": "What are the HOA rules in California?",
+      "note": "Wrong jurisdiction; corpus is Maryland only."
+    }
+  ]
+}

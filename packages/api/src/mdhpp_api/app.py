@@ -116,21 +116,27 @@ def create_app() -> FastAPI:
             )
 
             if not outcome.grounded:
+                if outcome.refusal_reason == "jurisdiction":
+                    refusal_text = (
+                        "This tool only covers Maryland housing law. Your question "
+                        "appears to be about another state, and HOA/condominium rules "
+                        "differ by state — so I can't answer it from my sources. "
+                        "Consult that state's statutes or a licensed attorney there."
+                    )
+                else:
+                    refusal_text = (
+                        "I can't find governing policy for this in my sources. My "
+                        "sources are Maryland state statute (the HOA, Condominium, and "
+                        "Contract Lien Acts), which set the rules an association must "
+                        "follow — but many specifics (fences, paint colors, parking, "
+                        "landscaping) are set by your community's own recorded "
+                        "covenants (CC&Rs), which I don't have. Check your community's "
+                        "declaration and bylaws, or consult a licensed Maryland "
+                        "attorney or the relevant county office."
+                    )
                 yield {
                     "event": "token",
-                    "data": json.dumps(
-                        {
-                            "text": "I can't find governing policy for this in my "
-                            "sources. My sources are Maryland state statute (the HOA, "
-                            "Condominium, and Contract Lien Acts), which set the rules "
-                            "an association must follow — but many specifics (fences, "
-                            "paint colors, parking, landscaping) are set by your "
-                            "community's own recorded covenants (CC&Rs), which I don't "
-                            "have. Check your community's declaration and bylaws, or "
-                            "consult a licensed Maryland attorney or the relevant "
-                            "county office."
-                        }
-                    ),
+                    "data": json.dumps({"text": refusal_text}),
                 }
                 yield {
                     "event": "done",
