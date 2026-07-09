@@ -4,8 +4,8 @@
 
 **Scenario: answerable question with a clean citation**
 1. User types "Can my HOA stop me from installing solar panels?"
-2. Query is embedded (BGE-M3) and run through BM25 in parallel; hybrid fusion returns top-20 candidate chunks filtered to `jurisdiction=MD`.
-3. BGE-reranker re-scores; top-5 pass to the LLM as XML-tagged context, each carrying its breadcrumb header and citation.
+2. Query is embedded (BGE-M3) and, in the same SQL, scored against the chunks' `tsvector` full-text index; hybrid fusion returns top-20 candidate chunks filtered to `jurisdiction=MD`.
+3. BGE-reranker re-scores each candidate against the full chunk text (not just the snippet, at `max_length=1024`); top-5 above the relevance floor pass to the LLM as XML-tagged context, each carrying its breadcrumb header and citation.
 4. LLM streams (SSE) a plain-language summary of the rule, notes Maryland limits an HOA's ability to prohibit solar, and cites the controlling Real Property section — framed as "here's what the law says," not "you're allowed."
 5. UI renders the streamed answer with the citation as a clickable source card, plus the standing "informational, not legal advice" banner.
 
@@ -16,7 +16,7 @@
 
 **Scenario: re-ingestion after an amendment**
 1. Maintainer drops an updated statute PDF into the source folder and runs `uv run ingest`.
-2. Ingestion parses → section-aware chunks with fresh breadcrumb headers → embeds → upserts into pgvector by stable content hash, replacing changed chunks only (delta update, not full rebuild).
+2. Ingestion parses → subsection-aware chunks (split at `(a)/(b)/(c)` boundaries, PDF artifacts stripped) with breadcrumb headers → embeds → upserts into pgvector by stable content hash, replacing changed chunks only and skipping re-embedding of unchanged ones (delta update, not full rebuild).
 
 ---
 
