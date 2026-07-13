@@ -14,7 +14,13 @@ service, no application-side merge.
 from __future__ import annotations
 
 import psycopg
-from pgvector.psycopg import Vector, register_vector
+from pgvector.psycopg import register_vector
+
+try:
+    # pgvector >= 0.4 moved the Vector class to the top-level package.
+    from pgvector import Vector
+except ImportError:  # pragma: no cover  (older pgvector < 0.4)
+    from pgvector.psycopg import Vector
 
 from mdhpp_core import Chunk, Citation, RetrievalResult
 

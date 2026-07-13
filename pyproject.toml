@@ -43,14 +43,6 @@ docs = [
     "mkdocs-material>=9.5",
     "mkdocstrings[python]>=0.26",
 ]
-# Evaluation toolchain — RAGAS faithfulness (LLM-judged) + dataset plumbing.
-# Installed on demand with `uv sync --group eval`; the deterministic retrieval
-# eval needs none of this. langchain-ollama points RAGAS at the app's LLM.
-eval = [
-    "ragas>=0.2",
-    "datasets>=3.0",
-    "langchain-ollama>=0.2",
-]
 
 [tool.uv.workspace]
 members = ["packages/*"]
@@ -120,7 +112,7 @@ explicit_package_bases = true
 
 [[tool.mypy.overrides]]
 # Third-party libs without stubs — don't fail strict mode on them.
-module = ["pgvector.*", "FlagEmbedding.*", "sentence_transformers.*", "trafilatura.*", "ragas.*", "langchain_ollama.*", "datasets.*"]
+module = ["pgvector.*", "FlagEmbedding.*", "sentence_transformers.*", "trafilatura.*"]
 ignore_missing_imports = true
 
 # ----------------------------------------------------------------------------

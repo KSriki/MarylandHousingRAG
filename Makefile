@@ -97,8 +97,8 @@ docs-build: ## Build the static docs site into ./site
 eval: ## Deterministic retrieval eval (hit-rate, MRR, refusal accuracy). Needs the DB + models.
 	uv run python -m evals.retrieval_eval
 
-eval-faithfulness: ## RAGAS faithfulness eval (LLM-judged, needs Ollama + `--group eval`).
-	uv run --group eval python -m evals.faithfulness_eval
+eval-faithfulness: ## RAGAS faithfulness eval — runs in evals/ isolated project (its own venv/lock).
+	cd evals && uv run python faithfulness_eval.py
 
 # ---- housekeeping ---------------------------------------------------------
 clean: ## Remove caches and build artifacts (keeps the venv)

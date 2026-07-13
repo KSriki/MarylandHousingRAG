@@ -33,4 +33,10 @@ repos:
         # the default safe loader rejects. This still catches real syntax errors.
         args: [--unsafe]
       - id: check-added-large-files
+        # Guards against committing model weights, corpora, or binaries. uv
+        # lockfiles are legitimately large plain text (the evals/ lock pins a
+        # deep langchain tree across platforms) and MUST be committed for
+        # reproducible resolution — exclude them rather than raising the limit,
+        # which would weaken the guard for the files it actually exists to catch.
         args: [--maxkb=500]
+        exclude: '(^|/)uv\.lock$'

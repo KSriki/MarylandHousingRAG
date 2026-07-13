@@ -1,0 +1,39 @@
+[project]
+name = "mdhpp-evals"
+version = "0.1.0"
+description = "Evaluation harnesses (retrieval + RAGAS faithfulness) for MDHousingPolicyPipeline."
+requires-python = ">=3.12"
+dependencies = [
+    # The app packages the eval drives, by path. These bring in the retrieval
+    # pipeline (embedder, reranker, hybrid search, orchestrator) the eval calls.
+    "mdhpp-core",
+    "mdhpp-retrieval",
+    # RAGAS faithfulness stack. Isolated here so its old langchain pins resolve
+    # ONLY against the eval's tree, not the whole app — which is what caused the
+    # version conflicts when these lived in the app's dependency group.
+    #   - ragas 0.4.x: broken ChatVertexAI import (issue #2745)
+    #   - ragas 0.1.x: needs langchain-core<0.3, conflicts with langchain-ollama
+    #   - ragas 0.2.x: post-0.3 stack (ollama ok), predates the 0.4 import bug,
+    #     but imports vertexai from langchain-community (<0.3.8 still has it)
+    "ragas>=0.2.9,<0.3",
+    "langchain-community>=0.3,<0.3.8",
+    "langchain-ollama>=0.2",
+    "langchain-anthropic>=0.2",
+    "datasets>=2.0",
+]
+
+[tool.uv.sources]
+# Path deps on the app packages. Not a workspace member, so this project gets
+# its OWN lockfile/venv — the RAGAS dependency tree never co-resolves with the
+# app's (torch, fastapi, etc.), which is the whole point of the separation.
+mdhpp-core = { path = "../packages/core", editable = true }
+mdhpp-retrieval = { path = "../packages/retrieval", editable = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# This project is a runner, not a library; nothing to package as an importable
+# module. Point at the eval scripts so hatchling has a valid target.
+include = ["*.py"]

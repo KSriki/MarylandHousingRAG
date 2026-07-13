@@ -50,7 +50,7 @@ class Settings(BaseSettings):
 
     # --- Generation ----------------------------------------------------------
     llm_provider: str = Field("ollama", description="ollama | openai | anthropic")
-    llm_model: str = Field("llama3.1:8b")
+    llm_model: str = Field("llama3.2:3b")
     llm_temperature: float = Field(0.1)
     llm_host: str = Field(
         "http://localhost:11434",

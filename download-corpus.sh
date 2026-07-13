@@ -38,9 +38,19 @@ SOLAR=(
 HOA=(
   11B-101 11B-102 11B-103 11B-103.1 11B-103.2 11B-104 11B-105 11B-106 11B-106.1
   11B-107 11B-108 11B-109 11B-110 11B-111 11B-111.1 11B-111.2 11B-111.3
-  11B-111.4 11B-111.5 11B-111.6 11B-111.7 11B-111.8 11B-111.9 11B-111.10
+  11B-111.4 11B-111.5 11B-111.6 11B-111.7 11B-111.8 11B-111.9
   11B-112 11B-112.1 11B-112.2 11B-112.3 11B-113 11B-113.1 11B-113.2 11B-113.3
   11B-113.4 11B-113.5 11B-113.6 11B-114 11B-115 11B-116 11B-117 11B-118
+)
+
+# --- HTML-only sections ----------------------------------------------------
+# A few sections are not served as static PDFs at the Statute_Web path but ARE
+# available at the dynamic StatuteText endpoint (as HTML, which trafilatura
+# extracts cleanly at ingest). 11B-111.10 (dispute settlement / fine process,
+# effective Oct 2022) is one of these. Listed separately so the corpus is fully
+# reproducible from this script.
+HTML_ONLY=(
+  11B-111.10
 )
 
 # --- Title 11: Maryland Condominium Act ------------------------------------
@@ -85,6 +95,30 @@ download_one() {
   sleep "$SLEEP"
 }
 
+download_one_html() {
+  local section="$1"
+  local url="https://mgaleg.maryland.gov/mgawebsite/Laws/StatuteText?article=grp&section=${section}&enactments=false"
+  local dest="${OUT}/md-rp-${section}.html"
+
+  if [[ -f "$dest" && "$FORCE" != "--force" ]]; then
+    echo "  skip (exists): ${section} [html]"
+    return
+  fi
+
+  if curl -fsSL "$url" -o "$dest" 2>/dev/null; then
+    # Sanity-check it contains statute text, not just a nav/error shell.
+    if [[ -s "$dest" ]] && grep -qi "Article - Real Property\|§${section}\|this section" "$dest"; then
+      echo "  ok:   ${section} [html]"
+    else
+      echo "  WARN: ${section} html had no statute text (removing)"
+      rm -f "$dest"
+    fi
+  else
+    echo "  MISS: ${section} [html] (unavailable, skipping)"
+  fi
+  sleep "$SLEEP"
+}
+
 download_group() {
   local name="$1"; shift
   echo ""
@@ -103,5 +137,11 @@ download_group "Title 11 - Condominium Act"             "${CONDO[@]}"
 download_group "Title 14 - Contract Lien Act"           "${LIEN[@]}"
 
 echo ""
-echo "Done. Downloaded $(find "$OUT" -name '*.pdf' | wc -l | tr -d ' ') PDFs into ${OUT}/"
+echo "=== HTML-only sections (${#HTML_ONLY[@]}) ==="
+for s in "${HTML_ONLY[@]}"; do
+  download_one_html "$s"
+done
+
+echo ""
+echo "Done. Downloaded $(find "$OUT" -name '*.pdf' | wc -l | tr -d ' ') PDFs + $(find "$OUT" -name '*.html' | wc -l | tr -d ' ') HTML into ${OUT}/"
 echo "Next: uv run mdhpp ingest"

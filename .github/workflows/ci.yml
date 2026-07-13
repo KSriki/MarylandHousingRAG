@@ -82,3 +82,73 @@ jobs:
 
       - name: Integration tests
         run: uv run pytest -m integration -q
+
+  # Retrieval eval gate: ingests the real corpus and checks that questions
+  # retrieve their governing section (hit-rate) and out-of-scope questions
+  # refuse (refusal accuracy). Heavier than the other jobs — it downloads the
+  # embedding + reranker models (~4GB, cached) and the statute corpus — so it
+  # runs after integration and its models are cached across runs.
+  eval:
+    runs-on: ubuntu-latest
+    needs: integration
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: mdhpp
+          POSTGRES_USER: mdhpp
+          POSTGRES_PASSWORD: mdhpp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mdhpp -d mdhpp"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      MDHPP_PG_HOST: localhost
+      MDHPP_PG_PORT: "5432"
+      MDHPP_PG_DB: mdhpp
+      MDHPP_PG_USER: mdhpp
+      MDHPP_PG_PASSWORD: mdhpp
+      # Keep HF model downloads in a cacheable location.
+      HF_HOME: ${{ github.workspace }}/.hf-cache
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync workspace
+        run: uv sync --frozen
+
+      - name: Apply schema
+        run: |
+          PGPASSWORD=mdhpp psql -h localhost -U mdhpp -d mdhpp -f docker/postgres/01_schema.sql
+
+      # Cache the embedding + reranker weights so they download once, not every
+      # run. Key on the model names in settings so a model change busts it.
+      - name: Cache models
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.hf-cache
+          key: hf-models-${{ hashFiles('packages/core/src/mdhpp_core/settings.py') }}
+
+      - name: Download corpus
+        run: ./scripts/download_corpus.sh
+
+      - name: Ingest corpus
+        run: uv run mdhpp ingest
+
+      - name: Retrieval eval gate
+        run: uv run python -m evals.retrieval_eval --hit-rate-min 0.9 --refusal-min 1.0
+        # NOTE: only the deterministic retrieval eval runs in CI. The RAGAS
+        # faithfulness eval (make eval-faithfulness) is intentionally NOT here:
+        # with the Anthropic judge it makes paid API calls, so it must never run
+        # on every push. Run it manually and deliberately instead.
